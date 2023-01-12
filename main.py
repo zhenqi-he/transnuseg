@@ -306,97 +306,38 @@ def main():
                 d_l = dice_loss_test(output1, semantic_seg_mask[0].float(), softmax=True)
                 dice_acc_test += 1- d_l.item()
                 
-#                 sum_output = output1.clone()-output2.clone()-output3.clone()
-#                 d_l2 = dice_loss_test2(sum_output,semantic_seg_mask[0].float(), softmax=True)
-                
-#                 dice_acc_test2 += 1- d_l2.item()
 
-            # semantic_seg_mask = semantic_seg_mask.squeeze(0).detach().cpu().numpy()
-            # instance_seg_mask = instance_seg_mask.squeeze(0).detach().cpu().numpy()
             semantic_seg_mask = semantic_seg_mask.squeeze(0).squeeze(0).detach().cpu().numpy()
             instance_seg_mask = instance_seg_mask.squeeze(0).squeeze(0).detach().cpu().numpy()
 
-            if model_type == "swin-unet":
-                m = torch.argmax(torch.softmax(output1, dim=1), dim=1).squeeze(0)
-                m = m.cpu().detach().numpy()
-                ins_predict = sem2ins(m.copy(),m.copy(),m.copy(),3)
-                
-                result = m.copy()
-                
-                F1 += calculate_F1_score(result,semantic_seg_mask)
-                acc += calculate_acc(result,semantic_seg_mask)
-                Iou += calculate_IoU(result,semantic_seg_mask)
-                aji += AJI(instance_seg_mask,ins_predict)
-                iou2 += get_iou(result,semantic_seg_mask)
-                
-                
-              
-            else:
-                m = torch.argmax(torch.softmax(output1, dim=1), dim=1).squeeze(0)
-                m = m.cpu().detach().numpy()
 
-                b = torch.argmax(torch.softmax(output2, dim=1), dim=1).squeeze(0)
-                b = b.cpu().detach().numpy()
+            m = torch.argmax(torch.softmax(output1, dim=1), dim=1).squeeze(0)
+            m = m.cpu().detach().numpy()
 
-                c = torch.argmax(torch.softmax(output3, dim=1), dim=1).squeeze(0)
-                c = c.cpu().detach().numpy()
+            b = torch.argmax(torch.softmax(output2, dim=1), dim=1).squeeze(0)
+            b = b.cpu().detach().numpy()
+
+            c = torch.argmax(torch.softmax(output3, dim=1), dim=1).squeeze(0)
+            c = c.cpu().detach().numpy()
 
 
-                result = m.copy() + b.copy() + c.copy()
-                ins_predict_unsharpen = sem2ins(m.copy(),b.copy(),c.copy(),0)
-                ins_predict_smooth = sem2ins_smooth(m.copy(),b.copy(),c.copy())
-                # ins_predict_sharpen = sem2ins(m.copy(),b.copy(),c.copy(),1)
-                Iou += float(calculate_IoU(m.copy(),semantic_seg_mask))
-                logging.info("{}th iou {}, iou_sum {}".format(i,calculate_IoU(result,semantic_seg_mask),Iou))
-                F1 += calculate_F1_score(result,semantic_seg_mask)
-                F1_2 += calculate_F1_score(m.copy(),semantic_seg_mask)
-                acc += calculate_acc(result,semantic_seg_mask)
-                acc2 += calculate_acc(m.copy(),semantic_seg_mask)
-                pq_stat =  get_fast_pq(instance_seg_mask,ins_predict_smooth)[0]
-                pg1 += pq_stat[0]
-                pg2 += pq_stat[1]
-                pg3 += pq_stat[2]
-                
-                aji += get_fast_aji(instance_seg_mask,ins_predict_unsharpen)
-                aji_smooth += get_fast_aji(instance_seg_mask,ins_predict_smooth)
-                ajip += get_fast_aji_plus(instance_seg_mask,ins_predict_smooth)
-                # aji2 += AJI(instance_seg_mask,ins_predict_sharpen)
-                iou2 += float(get_iou(result,semantic_seg_mask))
+            result = m.copy() + b.copy() + c.copy()
 
+            ins_predict_smooth = sem2ins_smooth(m.copy(),b.copy(),c.copy())
 
-            # cv2.imwrite("/root/Swin_unet/outputs/"+str(i)+".png",255*ins_predict)
-            # cv2.imwrite("/root/Swin_unet/dataset/instance_masks/"+str(i)+".png",instance_seg_mask)
+            Iou += float(calculate_IoU(m.copy(),semantic_seg_mask))
+            logging.info("{}th iou {}, iou_sum {}".format(i,calculate_IoU(result,semantic_seg_mask),Iou))
+            F1 += calculate_F1_score(result,semantic_seg_mask)
+            acc += calculate_acc(result,semantic_seg_mask)
+       
 
-            
+     
+    
+    logging.info("dice_acc {}".format(dice_acc_test/dataset_sizes['test']))
+    logging.info("F1 {}".format(F1/dataset_sizes['test']))
+    logging.info("acc {}".format(acc/dataset_sizes['test']))
+    logging.info("IOU {} dateset len {}".format(Iou,dataset_sizes['test']))
 
-
-    # print(dice_acc_test)
-    if model_type == 'swin-unet':
-        logging.info("dice_loss {}".format(dice_acc_test/dataset_sizes['test']))
-
-        logging.info("F1 {}".format(F1/dataset_sizes['test']))
-        logging.info("acc {}".format(acc/dataset_sizes['test']))
-        logging.info("IOU values {}, dataset len {}".format(IOU,dataset_sizes['test']))
-        logging.info("Iou ".format(Iou/dataset_sizes['test']))
-        logging.info("Iou2 ".format(iou2/dataset_sizes['test']))
-        logging.info("AJI {}".format(aji/dataset_sizes['test']))
-
-    else:
-        logging.info("dice_acc {}".format(dice_acc_test/dataset_sizes['test']))
-        logging.info("dice_acc2 {}".format(dice_acc_test2/dataset_sizes['test']))
-        logging.info("F1 {}".format(F1/dataset_sizes['test']))
-        logging.info("F1_2 {}".format(F1_2/dataset_sizes['test']))
-        logging.info("acc {}".format(acc/dataset_sizes['test']))
-        logging.info("acc2 {}".format(acc2/dataset_sizes['test']))
-        logging.info("IOU values {}, dataset len {}".format(IOU,dataset_sizes['test']))
-        logging.info("Iou ".format(Iou/dataset_sizes['test']))
-        logging.info("IOU {} dateset len {}".format(Iou,dataset_sizes['test']))
-        logging.info("Iou2 ".format(iou2/dataset_sizes['test']))
-        logging.info("AJI unshrpen {}".format(aji/dataset_sizes['test']))
-        logging.info("AJI plus {}".format(ajip/dataset_sizes['test']))
-        logging.info("PQ1 {}".format(pq1/dataset_sizes['test']))
-        logging.info("PQ2  {}".format(pq2/dataset_sizes['test']))
-        logging.info("PQ3  {}".format(pq3/dataset_sizes['test']))
   
 if __name__=='__main__':
     main()
