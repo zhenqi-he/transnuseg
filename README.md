@@ -1,3 +1,3 @@
-# Trans3NucSeg: A Transformer Nuclei Segmentation Framework.
+# TransNuSeg: An Efficient Multi-Task Transformer for Nuclei Segmentation
 
-Paper and full codes will be released soon.
+Paper will be released accordingly.
