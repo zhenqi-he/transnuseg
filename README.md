@@ -1,3 +1,1 @@
-# TransNuSeg: An Efficient Multi-Task Transformer for Nuclei Segmentation
-
-Paper will be released accordingly.
+Code for: TransNuSeg: An Efficient Multi-Task Transformer for Nuclei Segmentation
