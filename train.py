@@ -38,25 +38,8 @@ from models.transnucseg import TransNucSeg
 
 
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
-
+HISTOLOGY_DATA_PATH = 'PATH_TO_HISTOLOGY_DATA' # Containing two folders named train and test, and in each subforlder contains two folders named data and label.
 num_classes = 2
-# IMG_SIZE = 512
-# PATCH_SIZE = 4
-# IN_CHANS = 1
-# EMBED_DIM = 96
-# DEPTHS = [2, 2, 2, 2]
-# NUM_HEADS = [3, 6, 12, 24]
-# WINDOW_SIZE = 8 #original 7 --> 8
-# MLP_RATIO = 4
-# QKV_BIAS = True
-# QK_SCALE = None
-# DROP_RATE = 0.0
-# DROP_PATH_RATE = 0.1
-# APE = False
-# PATCH_NORM = True 
-# USE_CHECKPOINT = False
-# PRETRAIN_CKPT = None
-
 
 base_lr = 0.0005
 WARMUP_LR = 5e-7
@@ -77,7 +60,7 @@ def main():
     '''
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model_type', default="swin-unet-modified1") ### options : swin-unet, swin-unet-modified1,swin-unet-modified2
+    parser.add_argument('--model_type', default="transnucseg") 
     parser.add_argument("--alpha",default=0.3)
     parser.add_argument("--beta",default=0.35)
     parser.add_argument("--gamma",default=0.35)
@@ -127,7 +110,7 @@ def main():
 
         train_set, test_set = data.random_split(total_data, [train_set_size, test_set_size],generator=torch.Generator().manual_seed(666))
     elif dataset == "Histology":
-        data_path = "/root/autodl-tmp/Swin_unet/dataset/histology/histology_train"
+        data_path = HISTOLOGY_DATA_PATH
         train_set = Histology(dir_path = os.path.join(data_path,"train"),transform = None)
         test_set = Histology(dir_path = os.path.join(data_path,"test"),transform = None)
         # logging.info("train size {} test size {}".format(train_set_size,test_set_size))
@@ -195,19 +178,14 @@ def main():
                 semantic_seg_mask2 = semantic_seg_mask.cpu().detach().numpy()
                 normal_edge_mask2 = normal_edge_mask.cpu().detach().numpy()
                 cluster_edge_mask2 = cluster_edge_mask.cpu().detach().numpy()
-                cv2.imwrite('./saved/train_predicted_seg_mask.png',semantic_seg_mask2[0]*255)
-                cv2.imwrite('./saved/train_predicted_norm_mask.png',normal_edge_mask2[0]*255)
-                cv2.imwrite('./saved/train_predicted_cluster_mask.png',cluster_edge_mask2[0]*255)
+                
                 cluster_edge_mask = cluster_edge_mask.to(device)
                 # print('img shape ',img.shape)
                 # print('semantic_seg_mask shape ',semantic_seg_mask.shape)
                 
 
                 output1,output2,output3 = model(img)
-                # output1_ce = torch.permute(output1,(1,0,2,3))
-                # output2_ce = torch.permute(output2,(1,0,2,3))
-                # output3_ce = torch.permute(output3,(1,0,2,3))
-                # print('output1_ce shape ',output1_ce.shape)
+                
                 loss_seg = 0.4*ce_loss1(output1, semantic_seg_mask.long( )) + 0.6*dice_loss1(output1, semantic_seg_mask.float(), softmax=True)
                 loss_nor = 0.4*ce_loss2(output2, normal_edge_mask.long()) + 0.6*dice_loss2(output2, normal_edge_mask.float(), softmax=True)
                 loss_clu = 0.4*ce_loss3(output3, cluster_edge_mask.long()) + 0.6*dice_loss3(output3, cluster_edge_mask.float(), softmax=True)
