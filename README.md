@@ -22,4 +22,5 @@ The Histology dataset can be downloaded [here](https://www.kaggle.com/hjh415/ca2
 ```bash
 sh main.sh
 ```
+Two folders named log and saved will be automatically created to store logging information and the trained model.
 
