@@ -1,28 +1,20 @@
 
 import copy
-import logging
 import math
-
 from os.path import join as pjoin
 import cv2
-import torch
-import torch.nn as nn
 import numpy as np
-
 from torch.nn import CrossEntropyLoss, Dropout, Softmax, Linear, Conv2d, LayerNorm
 from torch.nn.modules.utils import _pair
 from scipy import ndimage
-
 import torch
 import torch.nn as nn
 import torch.utils.checkpoint as checkpoint
 from einops import rearrange
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
-
 import os
 import yaml
 from yacs.config import CfgNode as CN
-
 from torch.utils.data import Dataset,DataLoader,TensorDataset
 from torch.nn.modules.loss import CrossEntropyLoss
 import torch.optim as optim
@@ -30,25 +22,13 @@ from torchvision import transforms
 import torch.utils.data as data
 import scipy.io as sio
 import matplotlib.pyplot as plt
-
 from GPUtil import showUtilization as gpu_usage
 from numba import cuda
 import time
 import logging
 import sys
 from datetime import datetime
-from models.model_sharedAtt import SwinTransformerSys_modified_shared_MLP
-from models.model_MLP import SwinTransformerSys_modified_MLP
-from models.model import *
-from models.modified1 import *
-from models.modified2 import *
-from models.swin import *
-from models.modified3 import *
-from models.modified4 import *
-from models.model_sharedAttention import SharedSwinTransformerSys_modified
-from models.model_sharedAttention_MLP import SharedSwinTransformerSys_MLP_modified
-from models.model_sharedAttention2 import SharedSwinTransformerSys_modified2
-from models.model_sharedAttention3 import SharedSwinTransformerSys_modified3
+
 
 
 
