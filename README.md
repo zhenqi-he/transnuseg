@@ -3,7 +3,10 @@
 ## Intro
 In this paper, we propose a lightweight multi-task framework for nuclei segmentation. The overall archetecture is demonstrated in the figure below.
 
-![image](https://github.com/HEZHENQI/transnuseg/model.png)
+<p align="center">
+  <img src="./model.png" />
+</p>
+
 
 ## Train
 
