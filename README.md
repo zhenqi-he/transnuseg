@@ -7,8 +7,13 @@ In this paper, we propose a lightweight multi-task framework for nuclei segmenta
   <img src="./model.png" />
 </p>
 
+## Dataset
+In this paper, we test our model in microscopy and histology datasets.
 
-## Train
+The Histology dataset can be downloaded [here](https://www.kaggle.com/hjh415/ca25net)
+
+## Quick Start
+1, Download the datasets and put the path to the dataset in 
 
 ```bash
 sh main.sh
