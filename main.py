@@ -1,13 +1,11 @@
 import copy
 import logging
 import math
-
 from os.path import join as pjoin
 import cv2
 import torch
 import torch.nn as nn
 import numpy as np
-
 from torch.nn import CrossEntropyLoss, Dropout, Softmax, Linear, Conv2d, LayerNorm
 from torch.nn.modules.utils import _pair
 from scipy import ndimage
@@ -18,7 +16,6 @@ import torch.utils.checkpoint as checkpoint
 from einops import rearrange
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 import os
-
 from torch.utils.data import Dataset,DataLoader,TensorDataset
 from torch.nn.modules.loss import CrossEntropyLoss
 import torch.optim as optim
@@ -27,13 +24,10 @@ import torch.utils.data as data
 import scipy.io as sio
 import matplotlib.pyplot as plt
 import random
-
 import time
-import logging
 import sys
 from datetime import datetime
 import argparse
-
 from ray import tune
 from ray.tune import CLIReporter
 from ray.tune.schedulers import ASHAScheduler
