@@ -1266,11 +1266,11 @@ class TransNucSeg(nn.Module):
     Args:
         img_size (int | tuple(int)): Input image size. Default 512x512
         patch_size (int | tuple(int)): Patch size. Default: 4
-        in_chans (int): Number of input image channels. Default: 3
+        in_chans (int): Number of input image channels. Default: 3 #1 if used Radiology dataset
         num_classes (int): Number of classes for classification head. Default: 2
         embed_dim (int): Patch embedding dimension. Default: 96
         depths (tuple(int)): Depth of each Swin Transformer layer. default [2,2,2,2]
-        num_heads (tuple(int)): Number of attention heads in different layers.
+        num_heads (tuple(int)): Number of attention heads in different layers, default 3,6,12,24.
         window_size (int): Window size. Default: 8
         mlp_ratio (float): Ratio of mlp hidden dim to embedding dim. Default: 4
         qkv_bias (bool): If True, add a learnable bias to query, key, value. Default: True
@@ -1359,7 +1359,7 @@ class TransNucSeg(nn.Module):
         self.concat_back_dim = nn.ModuleList()
         self.concat_back_dim2 = nn.ModuleList()
         self.concat_back_dim3 = nn.ModuleList()
-
+        ####################################### Up-sampling #######################################
         for i_layer in range(self.num_layers):
             qkv_lists = []
             for i in range(depths[i_layer]):
@@ -1419,7 +1419,7 @@ class TransNucSeg(nn.Module):
 
 
                 self.layers_up2.append(layer_up2)
-                self.layers_up3.append(layer_up2)
+                self.layers_up3.append(layer_up2)## edge decoders sharing parts of blocks
                 self.concat_back_dim2.append(concat_linear2)
                 self.concat_back_dim3.append(concat_linear2)
             else:
@@ -1458,14 +1458,6 @@ class TransNucSeg(nn.Module):
                 self.layers_up3.append(layer_up3)
                 self.concat_back_dim2.append(concat_linear2)
                 self.concat_back_dim3.append(concat_linear3)
-                # #print("layer_up2 ",layer_up2)
-                # #print("layer_up3 ",layer_up3)
-                # #print("concat_back_dim2",concat_linear2)
-                
-              
-
-
-
 
 
         self.norm = norm_layer(self.num_features)
@@ -1555,39 +1547,6 @@ class TransNucSeg(nn.Module):
                 cluster_edge = torch.cat([cluster_edge,edge_mask_downsample[3-inx]],-1)
                 cluster_edge = self.concat_back_dim3[inx](cluster_edge)
                 cluster_edge = self.layers_up3[inx](cluster_edge)
-
-
-
-        # for inx, layer_up in enumerate(self.layers_up):
-        #     if inx == 0:
-        #         seg_mask = layer_up(seg_mask)
-               
-        #     else:
-        #         ### Skip connection
-        #         seg_mask = torch.cat([seg_mask,seg_mask_downsample[3-inx]],-1)
-        #         seg_mask = self.concat_back_dim[inx](seg_mask)
-        #         seg_mask = layer_up(seg_mask)
-
-        # for inx, layer_up in enumerate(self.layers_up2):
-        #     if inx == 0:
-        #         # cluster_edge = layer_up(edge_mask)
-        #         edge_mask = layer_up(edge_mask)
-        #     else:
-        #         ### Skip connection
-
-        #         edge_mask = torch.cat([edge_mask,edge_mask_downsample[3-inx]],-1)
-        #         edge_mask = self.concat_back_dim[inx](edge_mask)
-        #         edge_mask = layer_up(edge_mask)
-
-        # for inx, layer_up in enumerate(self.layers_up3):
-        #     if inx == 0:
-        #         cluster_edge = layer_up(edge_mask)
-        #     else:
-        #         ### Skip connection
-
-        #         cluster_edge = torch.cat([cluster_edge,edge_mask_downsample[3-inx]],-1)
-        #         cluster_edge = self.concat_back_dim[inx](cluster_edge)
-        #         cluster_edge = layer_up(cluster_edge)
         
 
         seg_mask = self.norm_up(seg_mask)
@@ -1640,6 +1599,5 @@ class TransNucSeg(nn.Module):
         flops += self.num_features * self.patches_resolution[0] * self.patches_resolution[1] // (2 ** self.num_layers)
         flops += self.num_features * self.num_classes
         return flops
-
 
 
