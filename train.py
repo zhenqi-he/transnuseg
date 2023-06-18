@@ -41,9 +41,7 @@ device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 HISTOLOGY_DATA_PATH = 'PATH_TO_HISTOLOGY_DATA' # Containing two folders named train and test, and in each subforlder contains two folders named data and label.
 num_classes = 2
 
-base_lr = 0.0005
-WARMUP_LR = 5e-7
-MIN_LR = 5e-6
+base_lr = 0.0001
 batch_size = 2
 num_epoch = 300
 IMG_SIZE = 512
