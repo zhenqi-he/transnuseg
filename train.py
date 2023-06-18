@@ -238,8 +238,7 @@ def main():
                 running_loss+=loss.item()
                 running_loss_wo_dis += (alpha*loss_seg + beta*loss_nor + gamma*loss_clu).item() ## Loss without distillation loss
                 running_loss_seg += loss_seg.item() ## Loss for nuclei segmantation
-            if phase == 'train':
-                with torch.autograd.set_detect_anomaly(True):
+                if phase == 'train':
                     optimizer.zero_grad()
                     loss.backward()
                     optimizer.step()
@@ -276,22 +275,7 @@ def main():
 
     dice_acc_test = 0
     dice_loss_test = DiceLoss(num_classes)
-    dice_acc_test2 = 0
-    dice_loss_test2 = DiceLoss(num_classes)
-    F1 = 0
-    F1_2 = 0
-    acc = 0
-    acc2 = 0
-    Iou = 0
-    aji = 0
-    aji_smooth = 0
-    ajip_smooth = 0
-    aji2 = 0
-    ajip = 0
-    iou2 = 0
-    pq1 = 0
-    pq2 = 0
-    pq3 = 0
+    
     with torch.no_grad():
         for i, d in enumerate(testloader, 0):
             img, instance_seg_mask, semantic_seg_mask,normal_edge_mask,cluster_edge_mask = d
@@ -309,50 +293,9 @@ def main():
             d_l = dice_loss_test(output1, semantic_seg_mask.float(), softmax=True)
             dice_acc_test += 1- d_l.item()
                 
-            print("semantic_seg_mask shape",semantic_seg_mask.shape)
-            # semantic_seg_mask = semantic_seg_mask.squeeze(0).detach().cpu().numpy()
-            # instance_seg_mask = instance_seg_mask.squeeze(0).detach().cpu().numpy()
-
-
-            m = torch.argmax(torch.softmax(output1, dim=1), dim=1)
-            m = m.cpu().detach().numpy()
-            cv2.imwrite('./saved/test_predicted_m.png',m[0]*255)
-
-            b = torch.argmax(torch.softmax(output2, dim=1), dim=1)
-            b = b.cpu().detach().numpy()
-
-            c = torch.argmax(torch.softmax(output3, dim=1), dim=1)
-            c = c.cpu().detach().numpy()
-
-
-            result = m.copy() + b.copy() + c.copy()
-
-            
-            # ins_predict_smooth = sem2ins_smooth(m.copy(),b.copy(),c.copy())
-            
-            try:
-                Iou += float(get_iou(m.copy(),semantic_seg_mask))
-            except:
-                Iou += 0
-            try:
-                F1 += float( calculate_F1_score(result,semantic_seg_mask))
-            except:
-                F1 += 0
-            try:
-                acc += float(calculate_acc(result,semantic_seg_mask))
-            except:
-                acc += 0
-            # logging.info("{}th iou {}, iou_sum {}".format(i,get_iou(result,semantic_seg_mask),Iou))
-            # F1 += calculate_F1_score(result,semantic_seg_mask)
-            # acc += calculate_acc(result,semantic_seg_mask)
-       
-
-     
-    
+  
     logging.info("dice_acc {}".format(dice_acc_test/dataset_sizes['test']))
-    logging.info("F1 {}".format(F1/dataset_sizes['test']))
-    logging.info("acc {}".format(acc/dataset_sizes['test']))
-    logging.info("IOU {}".format(Iou/dataset_sizes['test']))
+
 
   
 if __name__=='__main__':
