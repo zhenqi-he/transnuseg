@@ -111,7 +111,7 @@ def main():
         data_path = HISTOLOGY_DATA_PATH
         train_set = Histology(dir_path = os.path.join(data_path,"train"),transform = None)
         test_set = Histology(dir_path = os.path.join(data_path,"test"),transform = None)
-        # logging.info("train size {} test size {}".format(train_set_size,test_set_size))
+        logging.info("train size {} test size {}".format(train_set_size,test_set_size))
 
         # train_set, test_set = data.random_split(total_data, [train_set_size, test_set_size],generator=torch.Generator().manual_seed(21))
         
@@ -187,7 +187,7 @@ def main():
                 loss_seg = 0.4*ce_loss1(output1, semantic_seg_mask.long( )) + 0.6*dice_loss1(output1, semantic_seg_mask.float(), softmax=True)
                 loss_nor = 0.4*ce_loss2(output2, normal_edge_mask.long()) + 0.6*dice_loss2(output2, normal_edge_mask.float(), softmax=True)
                 loss_clu = 0.4*ce_loss3(output3, cluster_edge_mask.long()) + 0.6*dice_loss3(output3, cluster_edge_mask.float(), softmax=True)
-                print("loss_seg {}, loss_nor {}, loss_clu {}".format(loss_seg,loss_nor,loss_clu))
+                # print("loss_seg {}, loss_nor {}, loss_clu {}".format(loss_seg,loss_nor,loss_clu))
                 if epoch < 10:
                     ratio_d = 1
                 elif epoch < 20:
@@ -203,21 +203,17 @@ def main():
                 
                 ### calculating the distillation loss
                 m = torch.softmax(output1, dim=1)
-                # print('m.shape',m.shape)
                 m = torch.argmax(m, dim=1)
-                # print('m.shape',m.shape)
                 # m = m.squeeze(0)
                 m = m.cpu().detach().numpy()
                 
-                cv2.imwrite('./saved/train_predicted_m.png',m[0]*255)
-                cv2.imwrite('./saved/train_predicted_m2.png',m[0])
+        
                 b = torch.argmax(torch.softmax(output2, dim=1), dim=1)
                 
                 
                 b2 = b.cpu().detach().numpy()
                 # print('b2 shape',b2.shape)
-                cv2.imwrite('./saved/train_predicted_b.png',b2[0]*255)
-                cv2.imwrite('./saved/train_predicted_b2.png',b2[0])
+
                 
                 c = torch.argmax(torch.softmax(output3, dim=1), dim=1)
                 pred_edge_1 = edge_detection(m.copy(),channel)
