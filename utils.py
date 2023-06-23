@@ -870,4 +870,24 @@ def test(testloader,model_type, model_save_path,channel,device,logging,sharing_r
                 pq_stat =  get_fast_pq(instance_seg_mask,ins_predict_con)[0]
                 pq_2 += pq_stat[2]
     return dice_acc,acc,Iou,F1,aji,aji_2,ajip,ajip_2,pq,pq_2
+
+def edge_detection(m,channel = 1):
+    # gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY) 
+    if len(m.shape) == 2:
+        m = np.expand_dims(m, axis=0)
+    m = np.uint8(m)
+    b,h,w = m.shape
+    outputs = np.zeros((b,h,w))
+    # m = np.array(m, np.uint8)
+    # print("m shape ",m.shape)
+    for i in range(b):
+        contours, _ = cv2.findContours(m[i], cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        blank = np.zeros((512,512))
+        # draw the contours on a copy of the original image
+        cv2.drawContours(blank, contours, -1, 1, 2)
+        outputs[i] = blank
+    
+
+
+    return outputs
     
