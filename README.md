@@ -8,7 +8,7 @@ This paper proposes a lightweight multi-task framework for nuclei segmentation, 
 The overall architecture is demonstrated in the figure below. 
 
 <p align="center">
-  <img src="./model.png" />
+  <img src="./model.jpg" />
 </p>
 
 ## Dataset
