@@ -1,6 +1,6 @@
 # TransNuSeg: A Lightweight Multi-Task Transformer for Nuclei Segmentation
 
-This is the official implementation for **TransNuSeg: A Lightweight Multi-Task Transformer for Nuclei Segmentation** (MICCAI 2023).
+This is the official implementation for **TransNuSeg: A Lightweight Multi-Task Transformer for Nuclei Segmentation** (MICCAI 2023). [paper](https://arxiv.org/pdf/2307.08051.pdf)
 
 ## Introduction
 This paper proposes a lightweight multi-task framework for nuclei segmentation, namely TransNuSeg, as the first attempt at an entirely Swin-Transformer driven architecture.  Innovatively, to alleviate the prediction inconsistency between branches, we propose a self-distillation loss that regulates the consistency between the nuclei decoder and normal edge decoder. And an innovative attention-sharing scheme that shares attention heads amongst all decoders is employed to leverage the high correlation between tasks.
