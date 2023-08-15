@@ -82,7 +82,7 @@ def main():
         channel = 3
         
     else:
-        logging.info("Wrong Dataset type")
+        print("Wrong Dataset type")
         return 0
     
     
