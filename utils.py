@@ -1,4 +1,3 @@
-
 import copy
 import math
 from os.path import join as pjoin
@@ -14,7 +13,7 @@ from einops import rearrange
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 import os
 import yaml
-from yacs.config import CfgNode as CN
+# from yacs.config import CfgNode as CN
 from torch.utils.data import Dataset,DataLoader,TensorDataset
 from torch.nn.modules.loss import CrossEntropyLoss
 import torch.optim as optim
@@ -22,8 +21,8 @@ from torchvision import transforms
 import torch.utils.data as data
 import scipy.io as sio
 import matplotlib.pyplot as plt
-from GPUtil import showUtilization as gpu_usage
-from numba import cuda
+# from GPUtil import showUtilization as gpu_usage
+# from numba import cuda
 import time
 import logging
 import sys
@@ -153,7 +152,7 @@ def draw_loss(train_loss,val_loss,now):
     plt.ylabel('Loss')
     plt.title('Training and Validation Loss')
     plt.xlabel('epoch')
-    plt.savefig('/root/Swin_unet/loggings/TrainLoss_{}.png'.format(now), dpi=100)
+    plt.savefig('./log/TrainLoss_{}.png'.format(now), dpi=100)
     plt.show()
 
 
@@ -738,138 +737,8 @@ def gray_to_bgr(gray_img):
 
     return cv2.merge([b_img,g_img,r_img])
 
-def save_outputs_gt(predicted_instance,predicted_sem,predicted_nor,predicted_clu,img,sem_gt,nor_gt,clu_gt,ins_gt,save_path,img_id):
-    overlapped_ins_img = overlap_pred_gt(predicted_instance.copy(),img.cpu().numpy().squeeze())
-    overlapped_sem_gt = overlap_pred_gt(sem_gt,img.cpu().numpy().squeeze())
-    predicted_sem[predicted_sem!=0] = 255
-    predicted_sem[predicted_clu != 0] = 76
-    predicted_sem[predicted_nor != 0] = 150
-    sem_gt[sem_gt!=0] = 255
-    sem_gt[nor_gt!=0] = 150
-    sem_gt[clu_gt!=0] = 76
-    color_ins_gt = cv2.cvtColor(np.uint8(ins_gt),cv2.COLOR_GRAY2BGR)
-    color_predicted_instance = cv2.cvtColor(np.uint8(predicted_instance),cv2.COLOR_GRAY2BGR)
-    sem_gt = gray_to_bgr(sem_gt)
-    # print("sem_gt.shape ",sem_gt.shape)
-    predicted_sem = gray_to_bgr(predicted_sem)
-    # print(predicted_sem.shape)
-    cv2.imwrite(os.path.join(save_path,img_id+"_predicted_ins.png"),color_predicted_instance)
-    cv2.imwrite(os.path.join(save_path,img_id+"_gt_ins.png"),color_ins_gt)
-    cv2.imwrite(os.path.join(save_path,img_id+"_predicted_sem.png"),predicted_sem)
-    cv2.imwrite(os.path.join(save_path,img_id+"_predicted_ins_img.png"),overlapped_ins_img)
-    cv2.imwrite(os.path.join(save_path,img_id+"_gt_sem_img.png"),overlapped_sem_gt)
-    cv2.imwrite(os.path.join(save_path,img_id+"_gt_sem.png"),sem_gt)
 
-    
-def load_model_by_name(model_type,channel,sharing_ratio=0.5):
-    if model_type == "swin-unet-modified1":
-        model = SwinTransformerSys_modified(img_size=IMG_SIZE,num_classes=num_classes,in_chans=channel,window_size=WINDOW_SIZE,num_heads=NUM_HEADS)
-    elif model_type == "swin-unet-modified2":
-        model = SwinTransformerSys_modified2(img_size=IMG_SIZE,num_classes=num_classes,in_chans=channel,window_size=WINDOW_SIZE,num_heads=NUM_HEADS)
-    elif model_type == "swin-unet-modified3":
-        model = SwinTransformerSys_modified3(img_size=IMG_SIZE,num_classes=num_classes,in_chans=channel,window_size=WINDOW_SIZE,num_heads=NUM_HEADS)
-    elif model_type == "swin-unet-modified4":
-        model = SwinTransformerSys_modified4(img_size=IMG_SIZE,num_classes=num_classes,in_chans=channel,window_size=WINDOW_SIZE,num_heads=NUM_HEADS)
-    elif model_type == "swin-unet":
-        model = SwinTransformerSys(img_size=IMG_SIZE,num_classes=num_classes,in_chans=channel,window_size=WINDOW_SIZE)
-    elif model_type == "swin-unet-MLP":
-        model = SwinTransformerSys_modified_MLP(img_size=IMG_SIZE,num_classes=num_classes,in_chans=channel,window_size=WINDOW_SIZE,num_heads=NUM_HEADS)
-    elif model_type == "swin-unet-shared-MLP":
-        model = SwinTransformerSys_modified_shared_MLP(img_size=IMG_SIZE,in_chans=channel,num_classes=num_classes,sharing_ratio = sharing_ratio,window_size=WINDOW_SIZE,num_heads=NUM_HEADS)
-    elif model_type == "CA2.5":
-        model = Cia(is_ds=False,in_channels=channel)
-    elif model_type == "swin-unet-modified1-sharedAtt":
-        model = SwinTransformerSys_modified_shared_MLP(img_size=IMG_SIZE,num_classes=num_classes,in_chans = channel,num_heads=NUM_HEADS)
-    elif model_type == "swin-unet-modified1-sharedAttention":
-        model = SharedSwinTransformerSys_modified(img_size=IMG_SIZE,num_classes=num_classes,in_chans = channel,num_heads=NUM_HEADS,depths=DEPTHS,shared_ratio=sharing_ratio,window_size=8)
-    elif model_type == "swin-unet-modified1-sharedAttention2":
-        model = SharedSwinTransformerSys_modified2(img_size=IMG_SIZE,num_classes=num_classes,in_chans = channel,num_heads=NUM_HEADS,depths=DEPTHS,shared_ratio=sharing_ratio,window_size=8)
-    elif model_type == "swin-unet-modified1-sharedAttention3":
-        model = SharedSwinTransformerSys_modified3(img_size=IMG_SIZE,num_classes=num_classes,in_chans = channel,num_heads=NUM_HEADS,depths=DEPTHS,shared_ratio=sharing_ratio,window_size=8)
-        
-    else:
-        print("Wrong Model Type")
-        return 0
-    return model
 
-def test(testloader,model_type, model_save_path,channel,device,logging,sharing_ratio=0.5):
-    one_output_model_lists = ["swin-unet","unet++","transunet"]
-    model = load_model_by_name(model_type,channel,sharing_ratio)
-    model.load_state_dict(torch.load(model_save_path))
-
-    model.to(device)
-    model.eval()
-    dice_acc = 0
-    dice_loss_test = DiceLoss(2)
-    F1 = 0
-    acc = 0
-    Iou = 0
-    aji = 0
-    aji_2 = 0
-    ajip = 0
-    ajip_2 = 0
-    pq = 0
-    pq_2 = 0
-    with torch.no_grad():
-        for i, d in enumerate(testloader, 0):
-            img, instance_seg_mask, semantic_seg_mask,normal_edge_mask,cluster_edge_mask = d
-            img = img.float()    
-            img = img.to(device)
-
-            if model_type in one_output_model_lists:
-                output1 = model(img)
-                d_l = dice_loss_test(output1, semantic_seg_mask[0].float(), softmax=True)
-                dice_acc += 1- d_l.item()
-            else:
-                output1,output2,output3 = model(img)
-                
-                d_l = dice_loss_test(output1, semantic_seg_mask[0].float(), softmax=True)
-                dice_acc += 1- d_l.item()
-            semantic_seg_mask = semantic_seg_mask.squeeze(0).squeeze(0).detach().cpu().numpy()
-            instance_seg_mask = instance_seg_mask.squeeze(0).squeeze(0).detach().cpu().numpy()
-
-            if model_type in one_output_model_lists:
-                m = torch.argmax(torch.softmax(output1, dim=1), dim=1).squeeze(0)
-                m = m.cpu().detach().numpy()
-                ins_predict = find_con(m.copy())
-                
-                result = m.copy()
-                
-                F1 += calculate_F1_score(result,semantic_seg_mask)
-                acc += calculate_acc(result,semantic_seg_mask)
-                Iou += calculate_IoU(result,semantic_seg_mask)
-                aji += get_fast_aji(instance_seg_mask,ins_predict)
-                ajip += get_fast_aji_plus(instance_seg_mask,ins_predict)
-                Iou += float(get_iou(result,semantic_seg_mask))
-                pq_stat =  get_fast_pq(instance_seg_mask,ins_predict)[0]
-                pq += pq_stat[2]
-            else:
-                m = torch.argmax(torch.softmax(output1, dim=1), dim=1).squeeze(0)
-                m = m.cpu().detach().numpy()
-
-                b = torch.argmax(torch.softmax(output2, dim=1), dim=1).squeeze(0)
-                b = b.cpu().detach().numpy()
-
-                c = torch.argmax(torch.softmax(output3, dim=1), dim=1).squeeze(0)
-                c = c.cpu().detach().numpy()
-
-                
-
-                ins_predict_smooth = sem2ins_smooth(m.copy(),b.copy(),c.copy())
-                ins_predict_con = sem2ins_smooth_con(m.copy(),b.copy(),c.copy())
-
-                Iou += float(calculate_IoU(m.copy(),semantic_seg_mask))
-                acc += calculate_acc(m.copy(),semantic_seg_mask)
-                F1 += calculate_F1_score(m.copy(),semantic_seg_mask)
-                aji += get_fast_aji(instance_seg_mask,ins_predict_smooth)
-                ajip += get_fast_aji_plus(instance_seg_mask,ins_predict_smooth)
-                aji_2 += get_fast_aji(instance_seg_mask,ins_predict_con)
-                ajip_2 += get_fast_aji_plus(instance_seg_mask,ins_predict_con)
-                pq_stat =  get_fast_pq(instance_seg_mask,ins_predict_smooth)[0]
-                pq += pq_stat[2]
-                pq_stat =  get_fast_pq(instance_seg_mask,ins_predict_con)[0]
-                pq_2 += pq_stat[2]
-    return dice_acc,acc,Iou,F1,aji,aji_2,ajip,ajip_2,pq,pq_2
 
 def edge_detection(m,channel = 1):
     # gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY) 
