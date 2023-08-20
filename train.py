@@ -26,7 +26,7 @@ import sys
 from datetime import datetime
 import argparse
 
-from dataset import Histology,MyDataset
+from dataset import MyDataset
 from utils import *
 from models.transnuseg import TransNuSeg
 
