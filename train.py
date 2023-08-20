@@ -10,8 +10,6 @@ from torch.nn import CrossEntropyLoss, Dropout, Softmax, Linear, Conv2d, LayerNo
 from torch.nn.modules.utils import _pair
 from scipy import ndimage
 from torchvision import transforms
-import torch
-import torch.nn as nn
 import torch.utils.checkpoint as checkpoint
 from einops import rearrange
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
@@ -19,7 +17,6 @@ import os
 from torch.utils.data import Dataset,DataLoader,TensorDataset
 from torch.nn.modules.loss import CrossEntropyLoss
 import torch.optim as optim
-from torchvision import transforms
 import torch.utils.data as data
 import scipy.io as sio
 import matplotlib.pyplot as plt
@@ -28,43 +25,46 @@ import time
 import sys
 from datetime import datetime
 import argparse
-from ray import tune
-from ray.tune import CLIReporter
-from ray.tune.schedulers import ASHAScheduler
-import torch.optim as optim
+
 from dataset import Histology,MyDataset
 from utils import *
-from models.transnucseg import TransNucSeg
+from models.transnuseg import TransNuSeg
 
 
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
-HISTOLOGY_DATA_PATH = 'PATH_TO_HISTOLOGY_DATA' # Containing two folders named train and test, and in each subforlder contains two folders named data and label.
+HISTOLOGY_DATA_PATH = '/root/autodl-tmp/transnuseg/data/ClusterSeg Dataset/histology' # Containing two folders named train and test, and in each subforlder contains two folders named data and label.
+RADIOLOGY_DATA_PATH = '/root/autodl-tmp/transnuseg/data/ClusterSeg Dataset/fluorescence' # Containing two folders named train and test, and in each subforlder contains two folders named data and label.
 num_classes = 2
 
-base_lr = 0.0001
-batch_size = 2
-num_epoch = 300
+
 IMG_SIZE = 512
 
 def main():
     '''
-    model_type:  default: transnucseg
-    alpha: ratio of the loss of nuclei segmentation, dafault=0.3
+    model_type:  default: transnuseg
+    alpha: ratio of the loss of nuclei mask loss, dafault=0.3
     beta: ratio of the loss of normal edge segmentation, dafault=0.35
     gamma: ratio of the loss of cluster edge segmentation, dafault=0.35
     sharing_ratio: ratio of sharing proportion of decoders, default=0.5
+    random_seed: set the random seed for splitting dataset
     dataset: Radiology(grayscale) or Histology(rgb), default=Histology
+    num_epoch: number of epoches
+    lr: learning rate
     model_path: if used pretrained model, put the path to the pretrained model here
     '''
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model_type', default="transnucseg") 
-    parser.add_argument("--alpha",default=0.3)
-    parser.add_argument("--beta",default=0.35)
-    parser.add_argument("--gamma",default=0.35)
-    parser.add_argument("--sharing_ratio",default=0.5)
-    parser.add_argument("--dataset",default="Histology")
-    parser.add_argument("--model_path",default="")
+    parser.add_argument('--model_type',required=True, default="transnuseg", help="declare the model type to use, currently only support input being transnuseg") 
+    parser.add_argument("--alpha",required=True,default=0.3, help="coeffiecient of the weight of nuclei mask loss")
+    parser.add_argument("--beta",required=True,default=0.35, help="coeffiecient of the weight of normal edge loss")
+    parser.add_argument("--gamma",required=True,default=0.35, help="coeffiecient of the weight of cluster edge loss")
+    parser.add_argument("--sharing_ratio",required=True,default=0.5, help=" ratio of sharing proportion of decoders")
+    parser.add_argument("--random_seed",required=True, help="random seed")
+    parser.add_argument("--batch_size",required=True, help="batch size")
+    parser.add_argument("--dataset",required=True,default="Histology", help="Histology, Radiology")
+    parser.add_argument("--num_epoch",required=True,help='number of epoches')
+    parser.add_argument("--lr",required=True,help="learning rate")
+    parser.add_argument("--model_path",default=None,help="the path to the pretrained model")
 
     args = parser.parse_args()
     
@@ -75,11 +75,19 @@ def main():
     beta = float(args.beta)
     gamma = float(args.gamma)
     sharing_ratio = float(args.sharing_ratio)
+    batch_size=int(args.batch_size)
+    random_seed = int(args.random_seed)
+    num_epoch = int(args.num_epoch)
+    base_lr = float(args.lr)
+    
+    
 
     if dataset == "Radiology":
         channel = 1
+        IMG_SIZE = 512
     elif dataset == "Histology":
         channel = 3
+        IMG_SIZE = 512
         
     else:
         print("Wrong Dataset type")
@@ -88,7 +96,13 @@ def main():
     
     
     
-    model = TransNucSeg(img_size=IMG_SIZE)
+    model = TransNuSeg(img_size=IMG_SIZE)
+    if args.model_path is not None:
+        try:
+            model.load_state_dict(torch.load(args.model_path))
+        except Exception as err:
+            print("{} In Loading previous model weights".format(err))
+            
   
  
     model.to(device)
@@ -102,18 +116,25 @@ def main():
 
     
     if dataset == "Radiology":
-        total_data = MyDataset()
+        # total_data = MyDataset()
+        data_path = RADIOLOGY_DATA_PATH
+        total_data = MyDataset(dir_path=data_path)
         train_set_size = int(len(total_data) * 0.8)
         test_set_size = len(total_data) - train_set_size
 
-        train_set, test_set = data.random_split(total_data, [train_set_size, test_set_size],generator=torch.Generator().manual_seed(666))
+        train_set, test_set = data.random_split(total_data, [train_set_size, test_set_size],generator=torch.Generator().manual_seed(random_seed))
     elif dataset == "Histology":
         data_path = HISTOLOGY_DATA_PATH
-        train_set = Histology(dir_path = os.path.join(data_path,"train"),transform = None)
-        test_set = Histology(dir_path = os.path.join(data_path,"test"),transform = None)
-        logging.info("train size {} test size {}".format(train_set_size,test_set_size))
+        total_data = MyDataset(dir_path=data_path)
+        train_set_size = int(len(total_data) * 0.8)
+        test_set_size = len(total_data) - train_set_size
+        
+        # train_set = Histology(dir_path = os.path.join(data_path,"train"),transform = None)
+        # test_set = Histology(dir_path = os.path.join(data_path,"test"),transform = None)
+        
 
-        # train_set, test_set = data.random_split(total_data, [train_set_size, test_set_size],generator=torch.Generator().manual_seed(21))
+        train_set, test_set = data.random_split(total_data, [train_set_size, test_set_size],generator=torch.Generator().manual_seed(random_seed))
+        logging.info("train size {} test size {}".format(train_set_size,test_set_size))
         
     else:
         logging.info("Wrong Dataset type")
@@ -193,13 +214,13 @@ def main():
                 elif epoch < 20:
                     ratio_d = 0.7
                 elif epoch < 30:
-                    ratio_d = 0.3
-                elif epoch < 40:
-                    ratio_d = 0.1
-                # elif epoch >= 40:
+                    ratio_d = 0.4
+                # elif epoch < 40:
+                #     ratio_d = 0.1
+                # # elif epoch >= 40:
+                # #     ratio_d = 0
+                # else:
                 #     ratio_d = 0
-                else:
-                    ratio_d = 0
                 
                 ### calculating the distillation loss
                 m = torch.softmax(output1, dim=1)
@@ -251,7 +272,7 @@ def main():
                 test_loss.append(epoch_loss)
 
             if phase == 'test' and epoch_loss_seg < best_loss:
-                best_loss = epoch_loss
+                best_loss = epoch_loss_seg
                 best_epoch = epoch+1
                 best_model_wts = copy.deepcopy(model.state_dict())
                 logging.info("Best val loss {} save at epoch {}".format(best_loss,epoch+1))
