@@ -32,8 +32,8 @@ from models.transnuseg import TransNuSeg
 
 
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
-HISTOLOGY_DATA_PATH = '/root/autodl-tmp/transnuseg/data/ClusterSeg Dataset/histology' # Containing two folders named train and test, and in each subforlder contains two folders named data and label.
-RADIOLOGY_DATA_PATH = '/root/autodl-tmp/transnuseg/data/ClusterSeg Dataset/fluorescence' # Containing two folders named train and test, and in each subforlder contains two folders named data and label.
+HISTOLOGY_DATA_PATH = './data/histology' # Containing two folders named train and test, and in each subforlder contains two folders named data and label.
+RADIOLOGY_DATA_PATH = './data/fluorescence' # Containing two folders named train and test, and in each subforlder contains two folders named data and label.
 num_classes = 2
 
 
