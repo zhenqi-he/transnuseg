@@ -12,14 +12,18 @@ The overall architecture is demonstrated in the figure below.
 </p>
 
 ## Dataset
-In this paper, we test our model in microscopy and histology datasets.
+In this paper, we test our model in Fluorescence Microscopy Image Dataset and Histology Image Dataset from [ClusterSeg](https://github.com/lu-yizhou/ClusterSeg). It is available [here](https://drive.google.com/drive/folders/1-ML_Z3yJOQsy3wbv__RL-qDZg7-n8-eI?usp=drive_link)
 
-The Fluorescence Microscopy Image Dataset is available [here](https://www.kaggle.com/hjh415/ca25net)
 
-The Histology Image Dataset combines the open dataset [MoNuSeg](https://monuseg.grand-challenge.org/Data/) and another private histology dataset. 
+ 
 
 ## Quick Start
-1, Download the datasets
+1, Download the datasets from the above link and put them under the data folder.
+```bash
+cd data
+unzip histology.zip
+unzip fluorescence.zip
+```
 
 2, Modify the hyperparameters, alpha, beta, gamma and sharing_ratio in [main.sh](./main.sh) or use the default value
 
