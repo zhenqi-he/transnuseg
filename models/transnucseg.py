@@ -7,8 +7,6 @@ from torch.nn import CrossEntropyLoss, Dropout, Softmax, Linear, Conv2d, LayerNo
 from torch.nn.modules.utils import _pair
 from scipy import ndimage
 
-import torch
-import torch.nn as nn
 import torch.utils.checkpoint as checkpoint
 from einops import rearrange
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
@@ -22,27 +20,10 @@ import copy
 import logging
 import math
 import torch.nn.functional as F
-from os.path import join as pjoin
-import torch
-import torch.nn as nn
-import numpy as np
 
-from torch.nn import CrossEntropyLoss, Dropout, Softmax, Linear, Conv2d, LayerNorm
-from torch.nn.modules.utils import _pair
-from scipy import ndimage
 
-import torch
-import torch.nn as nn
-import torch.utils.checkpoint as checkpoint
-from einops import rearrange
-from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 
-import os
 
-import torch.optim as optim
-from torchvision import transforms
-import torch.utils.data as data
-import scipy.io as sio
 
 def conv1x1(in_planes: int, out_planes: int, stride: int = 1) -> nn.Conv2d:
     """1x1 convolution"""
@@ -1261,7 +1242,7 @@ class PatchEmbed(nn.Module):
             flops += Ho * Wo * self.embed_dim
         return flops
 
-class TransNucSeg(nn.Module):
+class TransNuSeg(nn.Module):
     r""" 
     Args:
         img_size (int | tuple(int)): Input image size. Default 512x512
