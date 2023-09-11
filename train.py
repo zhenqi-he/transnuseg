@@ -96,7 +96,7 @@ def main():
     
     
     
-    model = TransNuSeg(img_size=IMG_SIZE)
+    model = TransNuSeg(img_size=IMG_SIZE,in_chans=channel)
     if args.model_path is not None:
         try:
             model.load_state_dict(torch.load(args.model_path))
