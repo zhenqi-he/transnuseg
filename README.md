@@ -34,7 +34,23 @@ sh main.sh
 ```
 Two folders named log and saved will be automatically created to store logging information and the trained model.
 
+
 ## Environment
 The code is developed on one NVIDIA RTX 3090 GPU with 24 GB memory and tested in Python 3.8.10 and PyTorch 1.13.1.
 
+## How to cite
+You may cite us as
+```
+@InProceedings{transnuseg,
+    author="He, Zhenqi
+    and Unberath, Mathias
+    and Ke, Jing
+    and Shen, Yiqing",
+    title="TransNuSeg: A Lightweight Multi-task Transformer for Nuclei Segmentation",
+    booktitle="Medical Image Computing and Computer Assisted Intervention -- MICCAI",
+    year="2023",
+    pages="206--215",
+    isbn="978-3-031-43901-8"
+}
+```
 
